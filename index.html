@@ -39,6 +39,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Prevent all buttons from triggering text selection or browser actions */
+        button {
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
         body {
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
             background: var(--bg-primary);
@@ -895,6 +902,10 @@
             border: none;
             background: none;
             color: var(--text-secondary);
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .nav-item.active {
@@ -923,6 +934,10 @@
             cursor: pointer;
             margin-top: -28px;
             transition: all 0.15s;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .fab:active {
@@ -2251,14 +2266,18 @@
         function setupEventListeners() {
             // Bottom nav
             document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const view = btn.dataset.view;
                     navigateTo(view);
                 });
             });
 
             // FAB
-            document.getElementById('fabBtn').addEventListener('click', () => {
+            document.getElementById('fabBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 navigateTo('logTripView');
             });
 
