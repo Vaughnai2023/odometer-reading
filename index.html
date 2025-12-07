@@ -56,6 +56,15 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             text-rendering: optimizeLegibility;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Allow text selection only in input fields and textareas */
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         /* Header */
@@ -1523,7 +1532,7 @@
                 <h2 class="page-title">Log Trip</h2>
                 <p class="page-subtitle">Record your odometer reading to log mileage</p>
 
-                <form id="tripForm" onsubmit="return false;">
+                <div id="tripForm">
                     <div class="form-group">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-input" id="tripDate" required>
@@ -1584,7 +1593,7 @@
                         </svg>
                         Log Trip
                     </button>
-                </form>
+                </div>
             </div>
         </section>
 
@@ -1873,6 +1882,21 @@
             deferredPrompt: null,  // For PWA install
             confirmCallback: null  // For confirmation dialogs
         };
+
+        // Prevent text selection triggering search on Android Chrome
+        document.addEventListener('selectstart', (e) => {
+            // Only allow selection in input fields and textareas
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent long-press context menu on Android
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
