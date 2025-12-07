@@ -2637,13 +2637,20 @@
                 renderHistory();
             } else if (viewId === 'summaryView') {
                 renderSummary();
+            } else if (viewId === 'logTripView') {
+                // Ensure submit button is ready when navigating to log form
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
             }
         }
 
         // Update UI
         function updateUI() {
-            const taxYear = state.selectedTaxYear || getTaxYear();
-            const { start, end } = getTaxYearRange(taxYear);
+            try {
+                const taxYear = state.selectedTaxYear || getTaxYear();
+                const { start, end } = getTaxYearRange(taxYear);
 
             const taxYearTrips = state.trips.filter(t => {
                 const tripDate = new Date(t.date);
@@ -2695,6 +2702,10 @@
 
             // Empty state
             document.getElementById('emptyState').style.display = todayTrips.length === 0 ? 'block' : 'none';
+            } catch (error) {
+                console.error('updateUI error:', error);
+                // Don't let updateUI errors break the app
+            }
         }
 
         // History View
