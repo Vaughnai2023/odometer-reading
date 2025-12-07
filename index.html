@@ -2632,18 +2632,13 @@
 
                 // Pre-fill startKm from last trip's endKm
                 if (state.trips.length > 0) {
+                    // Sort by timestamp (not just date) to get the most recent trip
                     const sortedTrips = [...state.trips].sort(
-                        (a, b) => new Date(b.date) - new Date(a.date)
+                        (a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)
                     );
                     const startKmInput = document.getElementById('startKm');
-                    console.log('[navigateTo logTripView] Total trips:', state.trips.length);
-                    console.log('[navigateTo logTripView] Last trip:', sortedTrips[0]);
-                    console.log('[navigateTo logTripView] Setting startKm to:', sortedTrips[0].endKm);
                     if (startKmInput) {
                         startKmInput.value = sortedTrips[0].endKm;
-                        console.log('[navigateTo logTripView] startKm input value set to:', startKmInput.value);
-                    } else {
-                        console.error('[navigateTo logTripView] startKm input not found!');
                     }
                 }
             }
@@ -2682,17 +2677,14 @@
 
             // Last reading
             if (state.trips.length > 0) {
-                const sortedTrips = [...state.trips].sort((a, b) => new Date(b.date) - new Date(a.date));
+                // Sort by timestamp (not just date) to get the most recent trip
+                const sortedTrips = [...state.trips].sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date));
                 document.getElementById('lastReading').textContent = Math.round(sortedTrips[0].endKm);
 
                 // Pre-fill start km with last end km (only if element exists - not on home view)
                 const startKmInput = document.getElementById('startKm');
-                console.log('[updateUI] Total trips:', state.trips.length);
-                console.log('[updateUI] Last trip:', sortedTrips[0]);
-                console.log('[updateUI] startKm input exists?', !!startKmInput);
                 if (startKmInput) {
                     startKmInput.value = sortedTrips[0].endKm;
-                    console.log('[updateUI] startKm set to:', startKmInput.value);
                 }
             }
 
