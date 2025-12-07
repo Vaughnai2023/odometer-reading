@@ -2045,73 +2045,82 @@
         document.getElementById('tripForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const date = document.getElementById('tripDate').value;
-            const startKm = parseFloat(document.getElementById('startKm').value);
-            const endKm = parseFloat(document.getElementById('endKm').value);
-            const notes = document.getElementById('tripNotes').value;
-            const mileageType = document.querySelector('input[name="mileageType"]:checked').value;
-
-            const validation = validateKmInput(startKm, endKm);
-            if (!validation.valid) {
-                showToast(validation.message, 'error');
-                return;
-            }
-
-            const distance = endKm - startKm;
             const submitBtn = document.getElementById('submitBtn');
 
-            // Disable button and show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" opacity="0.3"></circle>
-                    <path d="M12 2 A10 10 0 0 1 22 12" opacity="1">
-                        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
-                    </path>
-                </svg>
-                Saving...
-            `;
+            try {
+                const date = document.getElementById('tripDate').value;
+                const startKm = parseFloat(document.getElementById('startKm').value);
+                const endKm = parseFloat(document.getElementById('endKm').value);
+                const notes = document.getElementById('tripNotes').value;
+                const mileageType = document.querySelector('input[name="mileageType"]:checked').value;
 
-            const trip = {
-                id: Date.now(),
-                date: date,
-                startKm: startKm,
-                endKm: endKm,
-                distance: distance,
-                notes: notes,
-                mileageType: mileageType,
-                photo: state.currentPhoto,
-                timestamp: new Date().toISOString()
-            };
+                const validation = validateKmInput(startKm, endKm);
+                if (!validation.valid) {
+                    showToast(validation.message, 'error');
+                    return;
+                }
 
-            state.trips.push(trip);
-            saveToStorage();
+                const distance = endKm - startKm;
 
-            // Send to n8n webhook with retry logic
-            await syncTripToWebhook(trip);
+                // Disable button and show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" opacity="0.3"></circle>
+                        <path d="M12 2 A10 10 0 0 1 22 12" opacity="1">
+                            <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                    Saving...
+                `;
 
-            // Reset form
-            document.getElementById('tripForm').reset();
-            state.currentPhoto = null;
-            document.getElementById('photoPreview').classList.remove('visible');
-            document.getElementById('photoPlaceholder').style.display = 'flex';
-            document.getElementById('photoCapture').classList.remove('has-photo');
-            setTodayDate();
+                const trip = {
+                    id: Date.now(),
+                    date: date,
+                    startKm: startKm,
+                    endKm: endKm,
+                    distance: distance,
+                    notes: notes,
+                    mileageType: mileageType,
+                    photo: state.currentPhoto,
+                    timestamp: new Date().toISOString()
+                };
 
-            // Re-enable button
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Log Trip
-            `;
+                state.trips.push(trip);
+                saveToStorage();
 
-            // Update UI and navigate to home
-            updateUI();
-            navigateTo('homeView');
+                // Send to n8n webhook with retry logic (don't block on errors)
+                syncTripToWebhook(trip).catch(err => {
+                    console.error('Webhook sync failed:', err);
+                });
+
+                // Reset form
+                document.getElementById('tripForm').reset();
+                state.currentPhoto = null;
+                document.getElementById('photoPreview').classList.remove('visible');
+                document.getElementById('photoPlaceholder').style.display = 'flex';
+                document.getElementById('photoCapture').classList.remove('has-photo');
+                setTodayDate();
+
+                // Update UI and navigate to home
+                updateUI();
+                navigateTo('homeView');
+
+            } catch (error) {
+                console.error('Form submission error:', error);
+                showToast('Error saving trip. Please try again.', 'error');
+            } finally {
+                // Always re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Log Trip
+                `;
+            }
         });
 
         // Sync trip to webhook with retry logic
