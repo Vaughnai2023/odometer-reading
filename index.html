@@ -2646,8 +2646,11 @@
                 const sortedTrips = [...state.trips].sort((a, b) => new Date(b.date) - new Date(a.date));
                 document.getElementById('lastReading').textContent = Math.round(sortedTrips[0].endKm);
 
-                // Pre-fill start km with last end km
-                document.getElementById('startKm').value = sortedTrips[0].endKm;
+                // Pre-fill start km with last end km (only if element exists - not on home view)
+                const startKmInput = document.getElementById('startKm');
+                if (startKmInput) {
+                    startKmInput.value = sortedTrips[0].endKm;
+                }
             }
 
             // Total trips (for selected tax year)
