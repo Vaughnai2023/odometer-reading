@@ -1753,16 +1753,6 @@
                 </button>
             </div>
 
-            <!-- n8n Webhook Section -->
-            <div class="settings-section">
-                <h4>Cloud Sync (n8n)</h4>
-                <p class="settings-description">Sync trips to your n8n workflow for cloud backup</p>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="webhookUrl">Webhook URL</label>
-                    <input type="url" class="form-input" id="webhookUrl" placeholder="https://your-n8n-instance.com/webhook/...">
-                </div>
-            </div>
-
             <!-- Data Management Section -->
             <div class="settings-section">
                 <h4>Data Management</h4>
@@ -1874,7 +1864,6 @@
         const state = {
             trips: [],
             currentView: 'homeView',
-            webhookUrl: '',
             currentPhoto: null,
             syncQueue: [],
             isSyncing: false,
@@ -1967,7 +1956,6 @@
             if (saved) {
                 const data = JSON.parse(saved);
                 state.trips = data.trips || [];
-                state.webhookUrl = data.webhookUrl || '';
                 state.syncQueue = data.syncQueue || [];
             }
         }
@@ -1975,7 +1963,6 @@
         function saveToStorage() {
             localStorage.setItem('mileageLog', JSON.stringify({
                 trips: state.trips,
-                webhookUrl: state.webhookUrl,
                 syncQueue: state.syncQueue
             }));
         }
@@ -2206,13 +2193,9 @@
         async function syncTripToWebhook(trip, retryCount = 0) {
             const maxRetries = 3;
 
-            if (!state.webhookUrl) {
-                showToast('Trip logged locally (no webhook configured)', 'success');
-                return;
-            }
-
             try {
-                const response = await fetch(state.webhookUrl, {
+                // Use our secure API endpoint instead of direct webhook URL
+                const response = await fetch('/api/webhook', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2263,7 +2246,7 @@
 
         // Process sync queue on app load
         async function processSyncQueue() {
-            if (state.isSyncing || state.syncQueue.length === 0 || !state.webhookUrl) {
+            if (state.isSyncing || state.syncQueue.length === 0) {
                 return;
             }
 
@@ -2298,7 +2281,6 @@
 
             // Settings
             document.getElementById('settingsBtn').addEventListener('click', () => {
-                document.getElementById('webhookUrl').value = state.webhookUrl;
                 document.getElementById('settingsModal').classList.add('active');
             });
 
@@ -2307,7 +2289,6 @@
             });
 
             document.getElementById('saveSettings').addEventListener('click', () => {
-                state.webhookUrl = document.getElementById('webhookUrl').value;
                 saveToStorage();
                 document.getElementById('settingsModal').classList.remove('active');
                 showToast('Settings saved!', 'success');
@@ -2442,7 +2423,6 @@
         function exportAllData() {
             const data = {
                 trips: state.trips,
-                webhookUrl: state.webhookUrl,
                 exportedAt: new Date().toISOString(),
                 version: '1.0'
             };
