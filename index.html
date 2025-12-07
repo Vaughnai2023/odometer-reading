@@ -608,6 +608,22 @@
             margin-top: 8px;
         }
 
+        .photo-synced-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .photo-synced-badge svg {
+            flex-shrink: 0;
+        }
+
         .trip-notes {
             margin-top: 8px;
             padding: 12px;
@@ -1846,6 +1862,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
+            cleanupOldTrips(); // Remove trips older than 30 days
             state.selectedTaxYear = getTaxYear(); // Set to current tax year
             updateUI();
             setupEventListeners();
@@ -1921,6 +1938,31 @@
                 webhookUrl: state.webhookUrl,
                 syncQueue: state.syncQueue
             }));
+        }
+
+        // Cleanup: Remove trips older than 30 days to prevent storage bloat
+        // Photos are already synced to Google Drive via n8n, so local storage is just for quick reference
+        function cleanupOldTrips() {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const before = state.trips.length;
+            state.trips = state.trips.filter(trip => {
+                const tripDate = new Date(trip.date);
+                return tripDate >= thirtyDaysAgo;
+            });
+
+            // Also clean up sync queue - remove old failed syncs
+            state.syncQueue = state.syncQueue.filter(trip => {
+                const tripDate = new Date(trip.date);
+                return tripDate >= thirtyDaysAgo;
+            });
+
+            const removed = before - state.trips.length;
+            if (removed > 0) {
+                console.log(`Cleaned up ${removed} trips older than 30 days`);
+                saveToStorage();
+            }
         }
 
         // Tax Year Calculations (March to February for SARS)
@@ -2150,6 +2192,15 @@
 
                 // Remove from sync queue if it was there
                 state.syncQueue = state.syncQueue.filter(t => t.id !== trip.id);
+
+                // Remove photo from local storage after successful sync
+                // Photo is now safely stored in Google Drive via n8n
+                const storedTrip = state.trips.find(t => t.id === trip.id);
+                if (storedTrip && storedTrip.photo) {
+                    storedTrip.photo = null;
+                    storedTrip.photoSynced = true; // Mark that photo was synced
+                }
+
                 saveToStorage();
 
             } catch (error) {
@@ -2616,7 +2667,7 @@
             });
 
             const dates = Object.keys(grouped).sort().reverse();
-            document.getElementById('historySubtitle').textContent = `${dates.length} day${dates.length !== 1 ? 's' : ''} recorded`;
+            document.getElementById('historySubtitle').textContent = `${dates.length} day${dates.length !== 1 ? 's' : ''} (last 30 days)`;
 
             historyList.innerHTML = dates.map(date => {
                 const trips = grouped[date];
@@ -2655,7 +2706,7 @@
                                         </div>
                                         <span class="mileage-badge ${trip.mileageType || 'business'}">${trip.mileageType === 'private' ? 'Private' : 'Business'}</span>
                                     </div>
-                                    ${trip.photo ? `<img src="${trip.photo}" class="trip-photo" alt="Odometer reading" loading="lazy">` : ''}
+                                    ${trip.photo ? `<img src="${trip.photo}" class="trip-photo" alt="Odometer reading" loading="lazy">` : (trip.photoSynced ? `<div class="photo-synced-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Photo synced to cloud</div>` : '')}
                                     ${trip.notes ? `<div class="trip-notes">${escapeHtml(trip.notes)}</div>` : ''}
                                     <div class="trip-actions">
                                         <button class="trip-action-btn" onclick="openEditTrip(${trip.id})" aria-label="Edit trip">
@@ -2688,23 +2739,20 @@
             });
         }
 
-        // Summary View
+        // Summary View (shows last 30 days of local data)
+        // Full tax year data is available in Google Sheets via n8n
         function renderSummary() {
-            const taxYear = getTaxYear();
-            const { start, end } = getTaxYearRange(taxYear);
+            // Show stats for locally stored trips (last 30 days)
+            const localTrips = state.trips;
 
-            const taxYearTrips = state.trips.filter(t => {
-                const tripDate = new Date(t.date);
-                return tripDate >= start && tripDate <= end;
-            });
-
-            const totalKm = taxYearTrips.reduce((sum, t) => sum + t.distance, 0);
+            const totalKm = localTrips.reduce((sum, t) => sum + t.distance, 0);
             document.getElementById('summaryTotal').textContent = Math.round(totalKm);
-            document.getElementById('summaryTrips').textContent = taxYearTrips.length;
+            document.getElementById('summaryTrips').textContent = localTrips.length;
+            document.getElementById('summaryTaxYear').textContent = 'Last 30 Days';
 
             // Calculate business vs private mileage
-            const businessTrips = taxYearTrips.filter(t => (t.mileageType || 'business') === 'business');
-            const privateTrips = taxYearTrips.filter(t => t.mileageType === 'private');
+            const businessTrips = localTrips.filter(t => (t.mileageType || 'business') === 'business');
+            const privateTrips = localTrips.filter(t => t.mileageType === 'private');
             const businessKm = businessTrips.reduce((sum, t) => sum + t.distance, 0);
             const privateKm = privateTrips.reduce((sum, t) => sum + t.distance, 0);
 
@@ -2713,44 +2761,51 @@
             document.getElementById('privateKm').textContent = `${Math.round(privateKm)} km`;
             document.getElementById('privateTrips').textContent = `${privateTrips.length} trip${privateTrips.length !== 1 ? 's' : ''}`;
 
-            // Months active
-            const months = new Set(taxYearTrips.map(t => {
+            // Weeks active (more meaningful for 30-day window)
+            const weeks = new Set(localTrips.map(t => {
                 const d = new Date(t.date);
-                return `${d.getFullYear()}-${d.getMonth()}`;
+                const weekNum = Math.ceil((d.getDate()) / 7);
+                return `${d.getFullYear()}-${d.getMonth()}-W${weekNum}`;
             }));
-            document.getElementById('summaryMonths').textContent = months.size;
+            document.getElementById('summaryMonths').textContent = weeks.size;
 
-            // Monthly breakdown
-            const monthlyData = {};
-            taxYearTrips.forEach(trip => {
+            // Update label to say "Weeks Active" instead of "Months Active"
+            const monthsLabel = document.querySelector('#summaryMonths + .summary-stat-label');
+            if (monthsLabel) monthsLabel.textContent = 'Weeks Active';
+
+            // Weekly breakdown (more useful for 30-day view)
+            const weeklyData = {};
+            localTrips.forEach(trip => {
                 const d = new Date(trip.date);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                const monthName = new Intl.DateTimeFormat('en-ZA', { month: 'long', year: 'numeric' }).format(d);
+                const weekStart = new Date(d);
+                weekStart.setDate(d.getDate() - d.getDay()); // Start of week (Sunday)
+                const key = weekStart.toISOString().split('T')[0];
+                const weekLabel = `Week of ${new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short' }).format(weekStart)}`;
 
-                if (!monthlyData[key]) {
-                    monthlyData[key] = {
-                        name: monthName,
+                if (!weeklyData[key]) {
+                    weeklyData[key] = {
+                        name: weekLabel,
                         trips: 0,
                         km: 0
                     };
                 }
-                monthlyData[key].trips++;
-                monthlyData[key].km += trip.distance;
+                weeklyData[key].trips++;
+                weeklyData[key].km += trip.distance;
             });
 
-            const sortedMonths = Object.keys(monthlyData).sort().reverse();
+            const sortedWeeks = Object.keys(weeklyData).sort().reverse();
             const monthlyList = document.getElementById('monthlyList');
 
-            if (sortedMonths.length === 0) {
+            if (sortedWeeks.length === 0) {
                 monthlyList.innerHTML = `
                     <div class="empty-state">
-                        <h3>No trips this tax year</h3>
-                        <p>Start logging to see monthly breakdown</p>
+                        <h3>No trips in last 30 days</h3>
+                        <p>Full history available in Google Sheets</p>
                     </div>
                 `;
             } else {
-                monthlyList.innerHTML = sortedMonths.map(key => {
-                    const data = monthlyData[key];
+                monthlyList.innerHTML = sortedWeeks.map(key => {
+                    const data = weeklyData[key];
                     return `
                         <div class="month-item">
                             <div class="month-info">
