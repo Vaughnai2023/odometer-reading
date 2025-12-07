@@ -1539,7 +1539,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Odometer Photo</label>
+                        <label class="form-label">Odometer Photo <span style="color: var(--text-secondary); font-weight: 400;">(optional)</span></label>
                         <div class="photo-capture" id="photoCapture">
                             <img id="photoPreview" class="photo-preview" alt="Odometer">
                             <div class="photo-placeholder" id="photoPlaceholder">
@@ -2176,30 +2176,17 @@
                     console.error('Webhook sync failed:', err);
                 });
 
-                // Show success message
+                // Show success message and navigate to home
                 showToast('Trip logged successfully!', 'success');
 
-                // Update UI stats in background
+                // Update UI stats
                 updateUI();
 
-                // Pre-fill start km with the end km we just entered (for next trip)
-                const lastEndKm = endKm;
-
-                // Reset form fields for next entry
-                document.getElementById('startKm').value = lastEndKm;
-                document.getElementById('endKm').value = '';
-                document.getElementById('tripNotes').value = '';
-                document.getElementById('businessMileage').checked = true;
-                state.currentPhoto = null;
-                document.getElementById('photoPreview').classList.remove('visible');
-                document.getElementById('photoPreview').src = '';
-                document.getElementById('photoPlaceholder').style.display = 'flex';
-                document.getElementById('photoCapture').classList.remove('has-photo');
-                document.getElementById('photoInput').value = '';
-                setTodayDate();
-
-                // Stay on log form - don't navigate away
-                // User can tap Home button if they want to leave
+                // Navigate to home view after successful save
+                // This provides clear feedback that the trip was saved
+                setTimeout(() => {
+                    navigateTo('homeView');
+                }, 500); // Small delay so user sees the success message
 
             } catch (error) {
                 console.error('Form submission error:', error);
