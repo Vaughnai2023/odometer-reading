@@ -2176,8 +2176,17 @@
                     console.error('Webhook sync failed:', err);
                 });
 
-                // Reset form fields manually (no longer a <form> element)
-                document.getElementById('startKm').value = '';
+                // Show success message
+                showToast('Trip logged successfully!', 'success');
+
+                // Update UI stats in background
+                updateUI();
+
+                // Pre-fill start km with the end km we just entered (for next trip)
+                const lastEndKm = endKm;
+
+                // Reset form fields for next entry
+                document.getElementById('startKm').value = lastEndKm;
                 document.getElementById('endKm').value = '';
                 document.getElementById('tripNotes').value = '';
                 document.getElementById('businessMileage').checked = true;
@@ -2189,9 +2198,8 @@
                 document.getElementById('photoInput').value = '';
                 setTodayDate();
 
-                // Update UI and navigate to home
-                updateUI();
-                navigateTo('homeView');
+                // Stay on log form - don't navigate away
+                // User can tap Home button if they want to leave
 
             } catch (error) {
                 console.error('Form submission error:', error);
