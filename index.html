@@ -1508,7 +1508,7 @@
                 <h2 class="page-title">Log Trip</h2>
                 <p class="page-subtitle">Record your odometer reading to log mileage</p>
 
-                <form id="tripForm">
+                <form id="tripForm" onsubmit="return false;">
                     <div class="form-group">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-input" id="tripDate" required>
@@ -1561,7 +1561,7 @@
                         <textarea class="form-textarea" id="tripNotes" placeholder="e.g., Client visit to Cape Town"></textarea>
                     </div>
 
-                    <button type="submit" class="primary-btn" id="submitBtn">
+                    <button type="button" class="primary-btn" id="submitBtn">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                             <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -2089,8 +2089,9 @@
 
         // Form Submission
         function setupFormHandler() {
-            document.getElementById('tripForm').addEventListener('submit', async (e) => {
+            document.getElementById('submitBtn').addEventListener('click', async (e) => {
             e.preventDefault();
+            e.stopPropagation();
 
             const submitBtn = document.getElementById('submitBtn');
 
