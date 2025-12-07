@@ -2636,8 +2636,14 @@
                         (a, b) => new Date(b.date) - new Date(a.date)
                     );
                     const startKmInput = document.getElementById('startKm');
+                    console.log('[navigateTo logTripView] Total trips:', state.trips.length);
+                    console.log('[navigateTo logTripView] Last trip:', sortedTrips[0]);
+                    console.log('[navigateTo logTripView] Setting startKm to:', sortedTrips[0].endKm);
                     if (startKmInput) {
                         startKmInput.value = sortedTrips[0].endKm;
+                        console.log('[navigateTo logTripView] startKm input value set to:', startKmInput.value);
+                    } else {
+                        console.error('[navigateTo logTripView] startKm input not found!');
                     }
                 }
             }
@@ -2681,8 +2687,12 @@
 
                 // Pre-fill start km with last end km (only if element exists - not on home view)
                 const startKmInput = document.getElementById('startKm');
+                console.log('[updateUI] Total trips:', state.trips.length);
+                console.log('[updateUI] Last trip:', sortedTrips[0]);
+                console.log('[updateUI] startKm input exists?', !!startKmInput);
                 if (startKmInput) {
                     startKmInput.value = sortedTrips[0].endKm;
+                    console.log('[updateUI] startKm set to:', startKmInput.value);
                 }
             }
 
