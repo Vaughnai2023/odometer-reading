@@ -1866,6 +1866,8 @@
             state.selectedTaxYear = getTaxYear(); // Set to current tax year
             updateUI();
             setupEventListeners();
+            setupPhotoHandlers();  // Initialize photo capture handlers
+            setupFormHandler();    // Initialize form submission handler
             setTodayDate();
             processSyncQueue();
             registerServiceWorker();
@@ -2024,11 +2026,12 @@
         }
 
         // Photo Handling with Compression
-        document.getElementById('photoCapture').addEventListener('click', () => {
-            document.getElementById('photoInput').click();
-        });
+        function setupPhotoHandlers() {
+            document.getElementById('photoCapture').addEventListener('click', () => {
+                document.getElementById('photoInput').click();
+            });
 
-        document.getElementById('photoInput').addEventListener('change', (e) => {
+            document.getElementById('photoInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 compressImage(file, (compressedBase64) => {
@@ -2073,18 +2076,20 @@
             reader.readAsDataURL(file);
         }
 
-        document.getElementById('removePhoto').addEventListener('click', (e) => {
-            e.stopPropagation();
-            state.currentPhoto = null;
-            document.getElementById('photoPreview').src = '';
-            document.getElementById('photoPreview').classList.remove('visible');
-            document.getElementById('photoPlaceholder').style.display = 'flex';
-            document.getElementById('photoCapture').classList.remove('has-photo');
-            document.getElementById('photoInput').value = '';
-        });
+            document.getElementById('removePhoto').addEventListener('click', (e) => {
+                e.stopPropagation();
+                state.currentPhoto = null;
+                document.getElementById('photoPreview').src = '';
+                document.getElementById('photoPreview').classList.remove('visible');
+                document.getElementById('photoPlaceholder').style.display = 'flex';
+                document.getElementById('photoCapture').classList.remove('has-photo');
+                document.getElementById('photoInput').value = '';
+            });
+        }
 
         // Form Submission
-        document.getElementById('tripForm').addEventListener('submit', async (e) => {
+        function setupFormHandler() {
+            document.getElementById('tripForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const submitBtn = document.getElementById('submitBtn');
@@ -2163,7 +2168,8 @@
                     Log Trip
                 `;
             }
-        });
+            });
+        }
 
         // Sync trip to webhook with retry logic
         async function syncTripToWebhook(trip, retryCount = 0) {
