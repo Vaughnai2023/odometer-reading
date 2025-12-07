@@ -2177,16 +2177,15 @@
                 });
 
                 // Show success message and navigate to home
-                showToast('Trip logged successfully!', 'success');
-
-                // Update UI stats
-                updateUI();
+                showToast('Trip logged successfully! Pull down to refresh for updated stats.', 'success');
 
                 // Navigate to home view after successful save
-                // This provides clear feedback that the trip was saved
                 setTimeout(() => {
                     navigateTo('homeView');
-                }, 500); // Small delay so user sees the success message
+                }, 800); // Small delay so user sees the success message
+
+                // Note: Stats will update on next page refresh
+                // Don't call updateUI() here as it can fail in SPA context
 
             } catch (error) {
                 console.error('Form submission error:', error);
