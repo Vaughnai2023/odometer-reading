@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mileagelog-v7';
+const CACHE_NAME = 'mileagelog-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
