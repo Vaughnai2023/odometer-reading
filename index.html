@@ -2181,12 +2181,17 @@
                     console.error('Webhook sync failed:', err);
                 });
 
-                // Reset form
-                document.getElementById('tripForm').reset();
+                // Reset form fields manually (no longer a <form> element)
+                document.getElementById('startKm').value = '';
+                document.getElementById('endKm').value = '';
+                document.getElementById('tripNotes').value = '';
+                document.getElementById('businessMileage').checked = true;
                 state.currentPhoto = null;
                 document.getElementById('photoPreview').classList.remove('visible');
+                document.getElementById('photoPreview').src = '';
                 document.getElementById('photoPlaceholder').style.display = 'flex';
                 document.getElementById('photoCapture').classList.remove('has-photo');
+                document.getElementById('photoInput').value = '';
                 setTodayDate();
 
                 // Update UI and navigate to home
