@@ -2170,6 +2170,7 @@
 
                 state.trips.push(trip);
                 saveToStorage();
+                updateUI(); // Refresh stats and prefill startKm for next trip
 
                 // Send to n8n webhook with retry logic (don't block on errors)
                 syncTripToWebhook(trip).catch(err => {
@@ -2177,15 +2178,12 @@
                 });
 
                 // Show success message and navigate to home
-                showToast('Trip logged successfully! Pull down to refresh for updated stats.', 'success');
+                showToast('Trip logged successfully!', 'success');
 
                 // Navigate to home view after successful save
                 setTimeout(() => {
                     navigateTo('homeView');
                 }, 800); // Small delay so user sees the success message
-
-                // Note: Stats will update on next page refresh
-                // Don't call updateUI() here as it can fail in SPA context
 
             } catch (error) {
                 console.error('Form submission error:', error);
@@ -2630,6 +2628,17 @@
                 const submitBtn = document.getElementById('submitBtn');
                 if (submitBtn) {
                     submitBtn.disabled = false;
+                }
+
+                // Pre-fill startKm from last trip's endKm
+                if (state.trips.length > 0) {
+                    const sortedTrips = [...state.trips].sort(
+                        (a, b) => new Date(b.date) - new Date(a.date)
+                    );
+                    const startKmInput = document.getElementById('startKm');
+                    if (startKmInput) {
+                        startKmInput.value = sortedTrips[0].endKm;
+                    }
                 }
             }
         }
