@@ -2636,9 +2636,16 @@
                     const sortedTrips = [...state.trips].sort(
                         (a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)
                     );
+                    console.log('[navigateTo] All trips:', state.trips);
+                    console.log('[navigateTo] Sorted trips:', sortedTrips);
+                    console.log('[navigateTo] Using trip:', sortedTrips[0]);
+                    console.log('[navigateTo] Setting startKm to:', sortedTrips[0].endKm);
                     const startKmInput = document.getElementById('startKm');
                     if (startKmInput) {
                         startKmInput.value = sortedTrips[0].endKm;
+                        console.log('[navigateTo] startKm input.value =', startKmInput.value);
+                    } else {
+                        console.error('[navigateTo] startKm input NOT FOUND!');
                     }
                 }
             }
